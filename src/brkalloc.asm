@@ -46,7 +46,7 @@ alloc:
 
     ; Calculate appropriate size for the chunk
     ; [ chunk size = ((size + 0x18) // 32 + 1) * 32 ]
-    lea rdx, [rdx + 0x18]
+    add rdx, 0x18
     shr rdx, 5
     inc rdx
     shl rdx, 5
@@ -58,14 +58,14 @@ alloc:
 
     ; First qword for header
     ; ( status and allocation size )
-    lea rdx, [rdx - 0x18]
+    sub rdx, 0x18
     mov rdi, r8
     shl rdx, 8
     mov dl, 1
     mov [rbx], rdx
 
     ; Increment address of rbx
-    lea rbx, [rbx + 0x8]
+    add rbx, 0x8
 
     ; Second qword for header
     ; ( Next chunk address in heap )
