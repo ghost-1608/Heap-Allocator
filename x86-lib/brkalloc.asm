@@ -1,5 +1,5 @@
 ; +==============================================================+
-; | src/brkalloc.asm -- Assembly source for allocator            |
+; | x86-lib/brkalloc.asm -- Assembly source for allocator        |
 ; |                                                              |
 ; | (Heap-Allocator)                                             |
 ; +==============================================================+
