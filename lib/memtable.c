@@ -1,9 +1,9 @@
 #include "memtable.h"
 #include "constants.h"
 
-void __mtinsert(__MTENTRY_t** segment, __MTENTRY_t* row)
+void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
 {
-  for (__MTENTRY_t* cur = *segment, prev = NULL; cur; cur = cur->nlink)
+  for (__MTENTRY_t *cur = *base_p, *prev = NULL; cur; cur = cur->nlink)
   {
     if (cur->size <= row->size)
     {
@@ -15,7 +15,7 @@ void __mtinsert(__MTENTRY_t** segment, __MTENTRY_t* row)
       else
       {
 	cur->plink = row;
-	*segment = row;
+	*base_p = row;
       }
 	
       row->plink = prev;
@@ -30,21 +30,44 @@ void __mtinsert(__MTENTRY_t** segment, __MTENTRY_t* row)
     }
     prev = cur;
   }
+
+  if (!*base_p)
+  {
+    *base_p = row;
+    row->nlink = NULL;
+    row->plink = NULL;
+  }
 }
 
-__HASTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* address)
+__MTSTATC_t __mtcreate(__MTABLE_t** mtable_p)
 {
-  if (!isarena)
+  if (!arena_p)
   {
     arena_p = alloc(MTARENA_SIZE);
-    mtable->top = 0;
-    mtable->free = NULL;
-    mtable->used = NULL;
-    isarena = TRUE;
+    if (!arena_p)
+      return __MTALERR;
   }
+
+  *mtable_p = (__MTABLE_t*) arena_p;
+  arena_p += sizeof(__MTABLE_t);
+
+  (*mtable_p)->top = 0;
+  (*mtable_p)->free = NULL;
+  (*mtable_p)->used = NULL;
+
+  return __MTSUCCESS;
+}
+
+__MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* address)
+{
+  if (!mtable ||
+      !size ||
+      status != MFREE && status != MUSED ||
+      !address)
+    return __MTFAILED;
   
   __MTENTRY_t* row = arena_p;
-  __MTENTRY_t** segment = NULL;
+  __MTENTRY_t** base_p = NULL;
 
   arena_p += sizeof(__MTENTRY_t);
   
@@ -55,36 +78,31 @@ __HASTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
   switch (status)
   {
     case MFREE:
-      segment = &mtable->free;
+      base_p = &mtable->free;
       break;
     case MUSED:
-      segment = &mtable->used;
+      base_p = &mtable->used;
   }
 
-  __mtinsert(segment, row);
+  __mtinsert(base_p, row);
 
-  if (!*table)
-  {
-    *segment = row;
-    row->nlink = NULL;
-    row->plink = NULL;
-  }
+  return __MTSUCCESS;
 }
 
-__HASTATC_t __mtmark(__MTABLE_t* mtable, __UID_t uid, __STAT_t status)
+__MTSTATC_t __mtmark(__MTABLE_t* mtable, __UID_t uid, __STAT_t status)
 {
-  __MTABLE_t** segment = NULL;
+  __MTENTRY_t** base = NULL;
 
   switch (status)
   {
     case MFREE:
-      table = &mtable->used;
+      base = &mtable->used;
       break;
     case MUSED:
-      table = &mtable->free;
+      base = &mtable->free;
   }
 
-  for (__MTENTRY_t* cur = *segment; cur; cur = cur->nlink)
+  for (__MTENTRY_t* cur = *base; cur; cur = cur->nlink)
   {
     if (cur->uid == uid)
     {
@@ -92,7 +110,7 @@ __HASTATC_t __mtmark(__MTABLE_t* mtable, __UID_t uid, __STAT_t status)
 	cur->plink->nlink = cur->nlink;
       if (cur->nlink)
 	cur->nlink->plink = cur->plink;
-      __mtinsert(segment, cur);
+      __mtinsert(base, cur);
     }
   }
 }

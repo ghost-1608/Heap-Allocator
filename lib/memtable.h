@@ -4,19 +4,19 @@
 #ifndef MEMTABLE_H
 #define MEMTABLE_H
 
-static __HAbool_t isarena = false;
-static void* a_pointer;
+static __HAbool_t isarena = FALSE;
+static void* arena_p;
 
-struct __attribute__((packed)) __MTENTRY_t
+struct __attribute__((packed)) __memtableEntry_struct
 {
   __UID_t uid;
   size_t size;
   void* address;
-  __MTENTRY_t* plink;
-  __MTENTRY_t* nlink;
+  struct __memtableEntry_struct* plink;
+  struct __memtableEntry_struct* nlink;
 };
 
-typedef struct __MTENTRY_t __MTENTRY_t;
+typedef struct __memtableEntry_struct __MTENTRY_t;
 
 typedef struct
 {
@@ -27,12 +27,14 @@ typedef struct
 
 typedef enum
 {
+  __MTALERR = -1,
   __MTSUCCESS,
   __MTFAILED
-} __HASTATC_t;
+} __MTSTATC_t;
 
-__HASTATC_t __mtadd(__MTABLE_t*, size_t, __STAT_t, void*);
-__HASTATC_t __mtmark(__MTABLE_t*, __UID_t, __STAT_t);
+__MTSTATC_t __mtcreate(__MTABLE_t**);
+__MTSTATC_t __mtadd(__MTABLE_t*, size_t, __STAT_t, void*);
+__MTSTATC_t __mtmark(__MTABLE_t*, __UID_t, __STAT_t);
 void __mtinsert(__MTENTRY_t**, __MTENTRY_t*);
 
 // void __mtsort(__MTABLE_t*);
