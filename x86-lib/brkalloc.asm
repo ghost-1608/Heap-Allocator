@@ -42,7 +42,6 @@ alloc:
     test rdi, rdi
     jz .exit    
     
-
     ; Calling sys_brk to find current break address
     mov rax, 12
     xor rdi, rdi
