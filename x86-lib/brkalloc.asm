@@ -34,13 +34,14 @@ alloc:
 
     xor rax, rax
 
+    ; Store size for later use
+    mov rdx, rdi
+    mov r10, rdi
+
     ; Invalid size handle (zero)
     test rdi, rdi
     jz .exit    
     
-    ; Store size for later use
-    mov rdx, rdi
-    mov r10, rdi
 
     ; Calling sys_brk to find current break address
     mov rax, 12
