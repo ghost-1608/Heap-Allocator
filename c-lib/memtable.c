@@ -113,7 +113,7 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
   return __MTSUCCESS;
 }
 
-__MTSTATC_t __mtmark(__MTABLE_t* mtable, __UID_t uid, __STAT_t status)
+__MTSTATC_t __mtmark(__MTABLE_t* mtable, void* address, __STAT_t status)
 {
   __MTENTRY_t** base_p = NULL;
 
@@ -128,7 +128,7 @@ __MTSTATC_t __mtmark(__MTABLE_t* mtable, __UID_t uid, __STAT_t status)
 
   for (__MTENTRY_t* cur = *base_p; cur; cur = cur->nlink)
   {
-    if (cur->uid == uid)
+    if (cur->address == address)
     {
       if (cur->plink)
 	cur->plink->nlink = cur->nlink;

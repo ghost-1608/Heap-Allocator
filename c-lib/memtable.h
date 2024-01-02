@@ -38,7 +38,7 @@ __MTSTATC_t __arensure(size_t);
 
 __MTSTATC_t __mtcreate(__MTABLE_t**);
 __MTSTATC_t __mtadd(__MTABLE_t*, size_t, __STAT_t, void*);
-__MTSTATC_t __mtmark(__MTABLE_t*, __UID_t, __STAT_t);
+__MTSTATC_t __mtmark(__MTABLE_t*, void*, __STAT_t);
 void __mtinsert(__MTENTRY_t**, __MTENTRY_t*);
 
 // void __mtsort(__MTABLE_t*);
