@@ -65,7 +65,9 @@ void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
 
 __MTSTATC_t __mtcreate(__MTABLE_t** mtable_p)
 {
-  switch (__arensure(sizeof(__MTABLE_t)))
+  __MSTATC_t ret = __arensure(sizeof(__MTABLE_t));
+
+  switch (ret)
   {
     case __ARSZERR:
     case __ARERROR:
@@ -93,7 +95,9 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
       !address)
     return __MTFAILED;
 
-  switch (__arensure(sizeof(__MTABLE_t)))
+  __MSTATC_t ret = __arensure(sizeof(__MTABLE_t));
+
+  switch (ret)
   {
     case __ARSZERR:
     case __ARERROR:
