@@ -50,11 +50,11 @@ typedef struct
 // Enum used for function return status codes
 typedef enum
 {
-  __ARSZERR = -3,
-  __ARERROR,
-  __MTALERR,
-  __MTSUCCESS,
-  __MTFAILED
+  __ARSZERR = -3, // Memory rena size related error
+  __ARERROR,      // Other memory arena related error
+  __MTALERR,      // Memory table allocation error
+  __MTSUCCESS,    // Generic success code
+  __MTFAILED      // Generic failure code
 } __MTSTATC_t;
 
 // Arena related function(s)
