@@ -49,15 +49,15 @@ void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
 	cur->plink = row;
 	*base_p = row;
       }
-      	
       row->plink = prev;
       row->nlink = cur;
+      return;
     }
     else if (!cur->nlink)
     {
       cur->nlink = row;
       row->plink = cur;
-      break;
+      return;
     }
     prev = cur;
   }
@@ -65,7 +65,13 @@ void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
 
 __MTSTATC_t __mtcreate(__MTABLE_t** mtable_p)
 {
-  __arensure(sizeof(__MTABLE_t));
+  switch (__arensure(sizeof(__MTABLE_t)))
+  {
+    case __ARSZERR:
+    case __ARERROR:
+      return ret;
+    case __MTSUCCESS:
+  }
   
   *mtable_p = (__MTABLE_t*) __arpointer;
 
@@ -87,7 +93,13 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
       !address)
     return __MTFAILED;
 
-  __arensure(sizeof(__MTENTRY_t));
+  switch (__arensure(sizeof(__MTABLE_t)))
+  {
+    case __ARSZERR:
+    case __ARERROR:
+      return ret;
+    case __MTSUCCESS:
+  }
   
   __MTENTRY_t* row = __arpointer;
   __MTENTRY_t** base_p = NULL;
