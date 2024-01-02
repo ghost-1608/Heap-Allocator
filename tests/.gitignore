@@ -1,6 +1,5 @@
 !unit*.asm
-!unit*.c
 brkalloc.o
 unit*.o
 unit*
-
+!unit*.c
