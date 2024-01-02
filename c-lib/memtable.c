@@ -1,8 +1,40 @@
 #include "memtable.h"
 #include "constants.h"
 
+__MTSTATC_t __arensure(size_t size)
+{
+  if (size > __ARALLOC_SIZE)
+    return __ARSZERR;
+  
+  if (__aravailable < size ||
+      !__aravailable && !__arpointer ||
+      __aravailable <= __ARMIN_SIZE)
+  {
+    __arpointer = alloc(__ARALLOC_SIZE);
+    if (__arpointer <= (void*) 0)
+      return __MTALERR;
+    __aravailable = __ARALLOC_SIZE;
+    return __MTSUCCESS;
+  }
+
+  if (!__aravailable || !__arpointer)
+    return __ARERROR;
+}
+
 void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
 {
+  if (!row || !base_p)
+    return;
+
+  row->nlink = NULL;
+  row->plink = NULL;
+
+  if (!*base_p)
+  {
+    *base_p = row;
+    return;
+  }
+  
   for (__MTENTRY_t *cur = *base_p, *prev = NULL; cur; cur = cur->nlink)
   {
     if (cur->size <= row->size)
@@ -17,39 +49,28 @@ void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
 	cur->plink = row;
 	*base_p = row;
       }
-	
+      	
       row->plink = prev;
       row->nlink = cur;
     }
-    else
+    else if (!cur->nlink)
     {
-      row->nlink = cur;
-      row->plink = NULL;
-      cur->plink = row;
+      cur->nlink = row;
+      row->plink = cur;
       break;
     }
     prev = cur;
-  }
-
-  if (!*base_p)
-  {
-    *base_p = row;
-    row->nlink = NULL;
-    row->plink = NULL;
   }
 }
 
 __MTSTATC_t __mtcreate(__MTABLE_t** mtable_p)
 {
-  if (!arena_p)
-  {
-    arena_p = alloc(MTARENA_SIZE);
-    if (!arena_p)
-      return __MTALERR;
-  }
+  __arensure(sizeof(__MTABLE_t));
+  
+  *mtable_p = (__MTABLE_t*) __arpointer;
 
-  *mtable_p = (__MTABLE_t*) arena_p;
-  arena_p += sizeof(__MTABLE_t);
+  __arpointer += sizeof(__MTABLE_t);
+  __aravailable -= sizeof(__MTABLE_t);
 
   (*mtable_p)->top = 0;
   (*mtable_p)->free = NULL;
@@ -65,11 +86,14 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
       status != MFREE && status != MUSED ||
       !address)
     return __MTFAILED;
+
+  __arensure(sizeof(__MTENTRY_t));
   
-  __MTENTRY_t* row = arena_p;
+  __MTENTRY_t* row = __arpointer;
   __MTENTRY_t** base_p = NULL;
 
-  arena_p += sizeof(__MTENTRY_t);
+  __arpointer += sizeof(__MTENTRY_t);
+  __aravailable -= sizeof(__MTENTRY_t);
   
   row->uid = ++mtable->top;
   row->size = size;
@@ -91,18 +115,18 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
 
 __MTSTATC_t __mtmark(__MTABLE_t* mtable, __UID_t uid, __STAT_t status)
 {
-  __MTENTRY_t** base = NULL;
+  __MTENTRY_t** base_p = NULL;
 
   switch (status)
   {
     case MFREE:
-      base = &mtable->used;
+      base_p = &mtable->used;
       break;
     case MUSED:
-      base = &mtable->free;
+      base_p = &mtable->free;
   }
 
-  for (__MTENTRY_t* cur = *base; cur; cur = cur->nlink)
+  for (__MTENTRY_t* cur = *base_p; cur; cur = cur->nlink)
   {
     if (cur->uid == uid)
     {
@@ -110,7 +134,7 @@ __MTSTATC_t __mtmark(__MTABLE_t* mtable, __UID_t uid, __STAT_t status)
 	cur->plink->nlink = cur->nlink;
       if (cur->nlink)
 	cur->nlink->plink = cur->plink;
-      __mtinsert(base, cur);
+      __mtinsert(base_p, cur);
     }
   }
 }

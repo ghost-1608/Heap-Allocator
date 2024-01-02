@@ -1,9 +1,11 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define KB 1024
-#define MB 1024 * KB
+#define B 1
+#define KiB 1024 * B
+#define MiB 1024 * KB
 
-#define MTARENA_SIZE 2 * KB
+#define __ARALLOC_SIZE 2 * KiB
+#define __ARMIN_SIZE 8 * B
 
 #endif

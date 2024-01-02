@@ -4,8 +4,8 @@
 #ifndef MEMTABLE_H
 #define MEMTABLE_H
 
-static __HAbool_t isarena = FALSE;
-static void* arena_p;
+static size_t __aravailable = 0;
+static void* __arpointer = NULL;
 
 struct __attribute__((packed)) __memtableEntry_struct
 {
@@ -27,10 +27,14 @@ typedef struct
 
 typedef enum
 {
-  __MTALERR = -1,
+  __ARSZERR = -3,
+  __ARERROR,
+  __MTALERR,
   __MTSUCCESS,
   __MTFAILED
 } __MTSTATC_t;
+
+__MTSTATC_t __arensure(size_t);
 
 __MTSTATC_t __mtcreate(__MTABLE_t**);
 __MTSTATC_t __mtadd(__MTABLE_t*, size_t, __STAT_t, void*);
