@@ -10,14 +10,14 @@ from pwn import process, log
 keyw = ['in', 'out']
 
 def parse(line):
-    if comment := line.find(';') == -1:
+    if comment := line.find('//') == -1:
         return False
     if openq := line.find('`', comment + 1) == -1:
         return False
     if closeq := line.find('`', openq + 1) == -1:
         return False
 
-    line = line.replace(';', '').replace('`', '')
+    line = line.replace('//', '').replace('`', '')
 
     for i in keyw:
         line = line.replace(i, f"'{i}'")
@@ -29,15 +29,15 @@ if len(sys.argv) == 1:
 else:
     file = sys.argv[1]
 
-if not os.path.exists(f'{file}.asm'):
-    log.error(f'Error: File "{file}.asm" not found!')
+if not os.path.exists(f'{file}.c'):
+    log.error(f'Error: File "{file}.c" not found!')
     sys.exit(-1)
 
 if not os.path.exists(f'{file}'):
     log.error(f'Error: Executable file "{file}" not found!')
     sys.exit(-2)
     
-with open(file + '.asm', 'r') as f:
+with open(file + '.c', 'r') as f:
     header = f.readline()
     header = parse(header)
     
