@@ -1,4 +1,4 @@
-*.o
-[a-z]
-![a-z].asm
-![a-z].c
+!unit*.asm
+unit*.o
+unit*
+
