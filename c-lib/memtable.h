@@ -11,6 +11,7 @@
  * Makes recycling memory allocation possible
  */
 
+#include <stdint.h>
 #include "links.h"
 
 #ifndef MEMTABLE_H
@@ -26,7 +27,7 @@ static void* __arpointer = NULL;
 //   * Latest unique identifier
 //   * Usage status code type
 typedef uint64_t __UID_t;
-typedef enum { MFREE, MUSED } __STAT_t;
+typedef enum { __MFREE, __MUSED } __STAT_t;
 
 // Struct used for mem table entry
 struct __attribute__((packed)) __memtableEntry_struct

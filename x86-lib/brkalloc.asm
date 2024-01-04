@@ -108,7 +108,7 @@ dealloc:
     ; Calculate beginning of header
     lea rbx, [rdi - 0x18]
     ; Set status byte to 0 (free)
-    mov [rbx], byte 0
+    mov byte [rbx], 0
 
     ; Reset RBX
     xor rbx, rbx

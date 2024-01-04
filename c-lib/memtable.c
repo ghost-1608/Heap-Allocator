@@ -43,15 +43,15 @@ __MTSTATC_t __arensure(size_t size)
       return __MTALERR;
 
     // Set available size counter
+    // counter values
     __aravailable = __ARALLOC_SIZE;
-
-    return __MTSUCCESS;
   }
 
   // Error check for invalid arena pointer and availability
-  // counter values
   if (!__aravailable || !__arpointer)
     return __ARERROR;
+
+  return __MTSUCCESS;
 }
 
 /*
@@ -153,7 +153,7 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
   // Error check for invalid arguments
   if (!mtable ||
       !size ||
-      status != MFREE && status != MUSED ||
+      status != __MFREE && status != __MUSED ||
       !address)
     return __MTFAILED;
 
@@ -177,17 +177,17 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
   __aravailable -= sizeof(__MTENTRY_t);
 
   // Set values to entry
-  row->uid = ++mtable->top;
+  row->uid = mtable->top++;
   row->size = size;
   row->address = address;
 
   // Select table by usage status
   switch (status)
   {
-    case MFREE:
+    case __MFREE:
       base_p = &mtable->free;
       break;
-    case MUSED:
+    case __MUSED:
       base_p = &mtable->used;
   }
 
@@ -204,29 +204,41 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
  */
 __MTSTATC_t __mtmark(__MTABLE_t* mtable, void* address, __STAT_t status)
 {
-  __MTENTRY_t** base_p = NULL;
+  // Error check for invalid arguments
+  if (!mtable || 
+      !address || 
+      status != __MFREE && status != __MUSED)
+    return __MTFAILED;
+  
+  __MTENTRY_t **curbase_p = NULL, **newbase_p = NULL;
 
   // Select which table to search based on usage status argument
   switch (status)
   {
-    case MFREE:
-      base_p = &mtable->used;
+    case __MFREE:
+      curbase_p = &mtable->used;
+      newbase_p = &mtable->free;
       break;
-    case MUSED:
-      base_p = &mtable->free;
+    case __MUSED:
+      curbase_p = &mtable->free;
+      newbase_p = &mtable->used;
   }
 
   // Search appropriate table only,
   // change required values and add the entry to the requested table
-  for (__MTENTRY_t* cur = *base_p; cur; cur = cur->nlink)
+  for (__MTENTRY_t* cur = *curbase_p; cur; cur = cur->nlink)
   {
     if (cur->address == address)
     {
       if (cur->plink)
 	cur->plink->nlink = cur->nlink;
+      else
+	*curbase_p = cur->nlink;
       if (cur->nlink)
 	cur->nlink->plink = cur->plink;
-      __mtinsert(base_p, cur);
+      __mtinsert(newbase_p, cur);
     }
   }
+
+  return __MTSUCCESS;
 }
