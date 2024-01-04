@@ -1,8 +1,0 @@
-.gdb_history
-memtable.o
-brkalloc.o
-unit*.o
-unit*
-*\~
-!unit*.asm
-!unit*.c
