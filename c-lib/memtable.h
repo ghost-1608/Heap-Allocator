@@ -32,9 +32,9 @@ typedef enum { __MFREE, __MUSED } __STAT_t;
 // Struct used for mem table entry
 struct __attribute__((packed)) __memtableEntry_struct
 {
-  __UID_t uid;
   size_t size;
   void* address;
+  void* chunkaddr;
   struct __memtableEntry_struct* plink;
   struct __memtableEntry_struct* nlink;
 };
@@ -43,7 +43,6 @@ typedef struct __memtableEntry_struct __MTENTRY_t;
 // Struct used for mem table
 typedef struct
 {
-  __UID_t top;
   __MTENTRY_t* free;
   __MTENTRY_t* used;
 } __MTABLE_t;
@@ -62,8 +61,9 @@ typedef enum
 __MTSTATC_t __arensure(size_t);
 // Memory table related functions
 __MTSTATC_t __mtcreate(__MTABLE_t**);
-__MTSTATC_t __mtadd(__MTABLE_t*, size_t, __STAT_t, void*);
-__MTSTATC_t __mtmark(__MTABLE_t*, void*, __STAT_t);
+__MTSTATC_t __mtadd(__MTABLE_t*, size_t, __STAT_t, void*, void*);
+__MTENTRY_t* __mtsearch(__MTABLE_t*, __STAT_t, size_t, void*);
+__MTSTATC_t __mtmark(__MTABLE_t*, __MTENTRY_t*, __STAT_t);
 void __mtinsert(__MTENTRY_t**, __MTENTRY_t*);
 
 // void __mtsort(__MTABLE_t*); <-- Future implement?

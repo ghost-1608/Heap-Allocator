@@ -1,4 +1,4 @@
-//`{in: None, out: ["UID: 0 Size: 4 Address: 0xdeadbeef", "UID: 1 Size: 2 Address: 0xdeafbeed"]}`
+//`{in: None, out: ["Size: 4 Chunk Address: 0xdeadbeef Address: 0xdeadbeef", "Size: 2 Chunk Address: 0xdeafbeed Address: 0xdeafbeed"]}`
 
 #include "../../../c-lib/memtable.h"
 #include <stdio.h>
@@ -36,23 +36,23 @@ int main()
   if (ret)
     return ret;
 
-  ret = errorlogger(__mtadd(mtable, 4, __MUSED, (void*) 0xdeadbeef));
+  ret = errorlogger(__mtadd(mtable, 4, __MUSED, (void*) 0xdeadbeef, (void*) 0xdeadbeef));
 
   if (ret)
     return ret;
 
   row = mtable->used;
 
-  printf("UID: %lu Size: %lu Address: %p\n", row->uid, row->size, row->address);
+  printf("Size: %lu Chunk Address: %p Address: %p\n", row->size, row->chunkaddr, row->address);
 
-  ret = errorlogger(__mtadd(mtable, 2, __MUSED, (void*) 0xdeafbeed));
+  ret = errorlogger(__mtadd(mtable, 2, __MUSED, (void*) 0xdeafbeed, (void*) 0xdeafbeed));
 
   if (ret)
     return ret;
 
   row = row->nlink;
 
-  printf("UID: %lu Size: %lu Address: %p\n", row->uid, row->size, row->address);
+  printf("Size: %lu Chunk Address: %p Address: %p\n", row->size, row->chunkaddr, row->address);
   
   return 0;
 }

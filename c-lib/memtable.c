@@ -135,7 +135,6 @@ __MTSTATC_t __mtcreate(__MTABLE_t** mtable_p)
   __arpointer += sizeof(__MTABLE_t);
   __aravailable -= sizeof(__MTABLE_t);
 
-  (*mtable_p)->top = 0;
   (*mtable_p)->free = NULL;
   (*mtable_p)->used = NULL;
 
@@ -148,12 +147,13 @@ __MTSTATC_t __mtcreate(__MTABLE_t** mtable_p)
  * Input: Mem table, size of allocation, usage status, buffer address
  * Output: Status code
  */
-__MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* address)
+__MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* chunk_address, void* address)
 {
   // Error check for invalid arguments
   if (!mtable ||
       !size ||
       status != __MFREE && status != __MUSED ||
+      !chunk_address || 
       !address)
     return __MTFAILED;
 
@@ -177,8 +177,8 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
   __aravailable -= sizeof(__MTENTRY_t);
 
   // Set values to entry
-  row->uid = mtable->top++;
   row->size = size;
+  row->chunkaddr = chunk_address;
   row->address = address;
 
   // Select table by usage status
@@ -202,11 +202,11 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* addr
  * Input: Mem table, buffer address, usage status
  * Output: Status code
  */
-__MTSTATC_t __mtmark(__MTABLE_t* mtable, void* address, __STAT_t status)
+__MTSTATC_t __mtmark(__MTABLE_t* mtable, __MTENTRY_t* cur, __STAT_t status)
 {
   // Error check for invalid arguments
   if (!mtable || 
-      !address || 
+      !cur || 
       status != __MFREE && status != __MUSED)
     return __MTFAILED;
   
@@ -224,21 +224,48 @@ __MTSTATC_t __mtmark(__MTABLE_t* mtable, void* address, __STAT_t status)
       newbase_p = &mtable->used;
   }
 
-  // Search appropriate table only,
-  // change required values and add the entry to the requested table
-  for (__MTENTRY_t* cur = *curbase_p; cur; cur = cur->nlink)
+  // Change required values and add the entry to the requested table
+  if (cur->plink)
+    cur->plink->nlink = cur->nlink;
+  else
+    *curbase_p = cur->nlink;
+  if (cur->nlink)
+    cur->nlink->plink = cur->plink;
+  __mtinsert(newbase_p, cur);
+  
+  return __MTSUCCESS;
+}
+
+/*
+ * Searches for an entry in the mem table by either size or address
+ * Input: Mem table, usage status, allocation size, buffer address
+ * Output: Row entry address
+ */
+__MTENTRY_t* __mtsearch(__MTABLE_t* mtable, __STAT_t status, size_t size, void* address)
+{
+  // Error checks for invalid arguments
+  if (!mtable ||
+      status != __MFREE && status != __MUSED ||
+      !size && !address)
+    return NULL;
+
+  __MTENTRY_t **base_p, *cur = NULL;
+
+  // Selecting correct base table address
+  switch (status)
   {
-    if (cur->address == address)
-    {
-      if (cur->plink)
-	cur->plink->nlink = cur->nlink;
-      else
-	*curbase_p = cur->nlink;
-      if (cur->nlink)
-	cur->nlink->plink = cur->plink;
-      __mtinsert(newbase_p, cur);
-    }
+    case __MFREE:
+      base_p = &mtable->free;
+      break;
+    case __MUSED:
+      base_p = &mtable->used;
   }
 
-  return __MTSUCCESS;
+  // Search by size or address
+  for (cur = *base_p; cur; cur->nlink)
+    if (size && cur->size == size ||
+        address && cur->address == address)
+      break;
+
+  return cur;
 }
