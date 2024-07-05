@@ -1,0 +1,20 @@
+#!/bin/zsh
+
+# Check if the first argument is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <first_argument>"
+    exit 1
+fi
+
+# Extract the first argument
+var1=$1
+
+# Extract the substring before '.'
+var2=${var1%%.*}
+
+gcc "../../../c-lib/memtable.c" -c -o "../lib/memtable.o"
+gcc "../../../c-lib/allocator.c" -c -o "../lib/allocator.o"
+
+# Compile using gcc
+gcc "$var1" "../lib/memtable.o" "../lib/allocator.o" "../../x86-lib/lib/brkalloc.o" -z noexecstack -o "$var2"
+

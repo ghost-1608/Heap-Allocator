@@ -41,8 +41,9 @@ int main()
   if (ret)
     return ret;
 
-  row = mtable->used;
 
+  printf("%p\n", mtable->used);
+  row = mtable->used;
   printf("Size: %lu Chunk Address: %p Address: %p\n", row->size, row->chunkaddr, row->address);
 
   ret = errorlogger(__mtadd(mtable, 2, __MUSED, (void*) 0xdeafbeed, (void*) 0xdeafbeed));
@@ -50,7 +51,8 @@ int main()
   if (ret)
     return ret;
 
-  row = row->nlink;
+  row = row->plink;
+  printf("%p\n", mtable->used->nlink);
 
   printf("Size: %lu Chunk Address: %p Address: %p\n", row->size, row->chunkaddr, row->address);
   

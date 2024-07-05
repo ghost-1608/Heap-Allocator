@@ -8,8 +8,9 @@
 ;    * Uses print2::push_int32_as_ASCII to print the number (from buffer)
 ;    * De-allocates memory
 
-%include "../../../x86-lib/brkalloc.asm"
 %include "../../../../print2.asm"
+
+extern alloc, dealloc
 
 %define INT32_SIZE 0x4
     

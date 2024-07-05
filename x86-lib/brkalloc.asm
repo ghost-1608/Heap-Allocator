@@ -19,7 +19,6 @@ global dealloc
 section .text
 alloc:
     ; Allocates memory on the heap by moving the brk address.
-    ; Adjusts allocation size as multiple of 32 bytes
     ; Generates header for the allocated chunk.
     ;
     ; Input:
@@ -28,38 +27,26 @@ alloc:
     ;   * RAX: Address for beginning of data section of allocated
     ;          chunk
     ;
-    ; (Resets values of RBX, RDX, R10)
-
-    enter 0, 0
-
-    xor rax, rax
-
-    ; Store size for later use
-    mov rdx, rdi
-    mov r10, rdi
+    ; (Resets values of RDX)
 
     ; Invalid size handle (zero)
     test rdi, rdi
     jz .exit    
+
+    ; Store size for later use
+    mov rdx, rdi
     
-    ; Calling sys_brk to find current break address
-    mov rax, 12
-    xor rdi, rdi
+    ; Calling sys_brk to find current brk address
+    mov eax, 12
+    xor edi, edi
     syscall
 
-    ; Storing break address for later use
-    mov rbx, rax
-
-    ; Calculate appropriate size for the chunk
-    ; [ chunk size = ((size + 0x18) // 32 + 1) * 32 ]
-    add rdx, 0x18
-    shr rdx, 5
-    inc rdx
-    shl rdx, 5
+    ; Calculate new address for brk
+    ; ( current brk address + size + header )
+    lea rdi, [rax + rdx + 0x10]
 
     ; Calling sys_brk to move break address using calculated size
-    mov rax, 12
-    lea rdi, [rbx + rdx]
+    mov eax, 12
     syscall
 
     ; Error handling (negative value)
@@ -67,50 +54,42 @@ alloc:
     js .exit
 
     ; First qword for header
-    ; ( status and allocation size )
-    sub rdx, 0x18
-    shl rdx, 8
-    mov dl, 1
-    mov [rbx], rdx
-
-    ; Increment address of RBX
-    add rbx, 0x8
+    ; ( Allocation size )
+    mov [rax], rdx
 
     ; Second qword for header
-    ; ( Next chunk address in heap )
-    mov [rbx], rax
+    ; ( Flags = F# (8 Flag Bytes) )
+    ; ( F0 F1 F2 F3 F4 F5 F6 F7 )
+    ; ( F7 -> Usage status (0x00 - Free, 0x01 - Used) )
+    mov byte [rax + 0xf], 0x01
 
     ; Store data section address in RAX to return
-    lea rax, [rbx + 0x10]
+    add rax, 0x10
+
 .exit:
     ; Restore size value to RDI
-    mov rdi, r10
-    ; Reset RBX, RDX, and R10
-    xor rbx, rbx
-    xor rdx, rdx
-    xor r10, r10
-    leave
+    mov rdi, rdx
+    ; Reset RDX
+    xor edx, edx
+
     ret
 
 dealloc:
     ; Marks allocated chunk to be free
-    ; Makes changes to the header section alone (First qword)
+    ; Makes changes to the header section alone (Second qword)
     ;
     ; Input:
     ;   * RDI: Address of memory buffer
     ; Output:
     ;     (void)
     ;
-    ; (Resets value of RBX)
 
-    enter 0, 0
+    ; Change the usage status flag byte to 0x00 (Free)
 
-    ; Calculate beginning of header
-    lea rbx, [rdi - 0x18]
-    ; Set status byte to 0 (free)
-    mov byte [rbx], 0
+    test rdi, rdi
+    jz .exit
 
-    ; Reset RBX
-    xor rbx, rbx
-    leave
+    mov byte [rdi - 0x1], 0x00
+
+.exit:
     ret

@@ -8,7 +8,7 @@
 ;    * Uses sys_write to print the char (from buffer)
 ;    * De-allocates memory
 
-%include "../../../x86-lib/brkalloc.asm"
+extern alloc, dealloc
 
 %define CHAR_SIZE 0x1
     

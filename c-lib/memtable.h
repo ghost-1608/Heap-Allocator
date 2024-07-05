@@ -11,22 +11,21 @@
  * Makes recycling memory allocation possible
  */
 
-#include <stdint.h>
-#include "links.h"
-
 #ifndef MEMTABLE_H
 #define MEMTABLE_H
+
+#include <stdint.h>
+#include "links.h"
+#include <errno.h>
 
 // Memory arena related global variables
 //   * Arena space availability counter
 //   * Arena pointer
 static size_t __aravailable = 0;
-static void* __arpointer = NULL;
+static void*  __arpointer   = NULL;
 
 // Data types necessary:-
-//   * Latest unique identifier
 //   * Usage status code type
-typedef uint64_t __UID_t;
 typedef enum { __MFREE, __MUSED } __STAT_t;
 
 // Struct used for mem table entry
@@ -58,13 +57,13 @@ typedef enum
 } __MTSTATC_t;
 
 // Arena related function(s)
-__MTSTATC_t __arensure(size_t);
+__MTSTATC_t  __arensure (size_t);
 // Memory table related functions
-__MTSTATC_t __mtcreate(__MTABLE_t**);
-__MTSTATC_t __mtadd(__MTABLE_t*, size_t, __STAT_t, void*, void*);
-__MTENTRY_t* __mtsearch(__MTABLE_t*, __STAT_t, size_t, void*);
-__MTSTATC_t __mtmark(__MTABLE_t*, __MTENTRY_t*, __STAT_t);
-void __mtinsert(__MTENTRY_t**, __MTENTRY_t*);
+__MTSTATC_t  __mtcreate (__MTABLE_t**);
+__MTSTATC_t  __mtadd    (__MTABLE_t*, size_t, __STAT_t, void*, void*);
+__MTENTRY_t* __mtsearch (__MTABLE_t*, __STAT_t, size_t, void*);
+__MTSTATC_t  __mtmark   (__MTABLE_t*, __MTENTRY_t*, __STAT_t, size_t);
+void         __mtinsert (__MTENTRY_t**, __MTENTRY_t*);
 
 // void __mtsort(__MTABLE_t*); <-- Future implement?
 #endif

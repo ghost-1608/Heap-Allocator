@@ -8,13 +8,12 @@
  *   - alloc()
  *   - dealloc()
  */
-
-#include <stddef.h>
-
 #ifndef LINKS_H
 #define LINKS_H
 
+#include <stddef.h>
+
 extern void* alloc(size_t);
-extern void dealloc(void*);
+extern void  dealloc(void*);
 
 #endif

@@ -32,31 +32,29 @@ __MTSTATC_t __arensure(size_t size)
   //   * Arena hasn't been created
   //   * Available space in arena is below min threshold
   if (__aravailable < size ||
-      !__aravailable && !__arpointer ||
+      __aravailable == 0 && __arpointer == NULL ||
       __aravailable <= __ARMIN_SIZE)
   {
-    // Set arena pointer
-    __arpointer = alloc(__ARALLOC_SIZE);
+    // Try to allocate space for arena
+    void* tmp = alloc(__ARALLOC_SIZE);
 
     // Error check for buffer returned by alloc()
-    if (__arpointer <= (void*) 0)
+    if (tmp <= (void*) 0)
       return __MTALERR;
 
+    // Set arena pointer to allocated address
+    __arpointer = tmp;
     // Set available size counter
-    // counter values
     __aravailable = __ARALLOC_SIZE;
   }
-
-  // Error check for invalid arena pointer and availability
-  if (!__aravailable || !__arpointer)
-    return __ARERROR;
 
   return __MTSUCCESS;
 }
 
 /*
  * Function to insert new row entry to mem table
- * Doubly-linked list decending order entry
+ * Doubly-linked list non-decreasing order entry based on
+ * size
  * Input: Table base pointer address, new row
  * Output: Status code
  */
@@ -64,7 +62,7 @@ void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
 {
   // Error check for invalid entry row and table base
   // pointer address values
-  if (!row || !base_p)
+  if (row == NULL || base_p == NULL)
     return;
 
   // Init next and prev link values
@@ -72,32 +70,27 @@ void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
   row->plink = NULL;
 
   // In case table has no entry
-  if (!*base_p)
+  if (*base_p == NULL)
   {
     *base_p = row;
     return;
   }
 
   // Loop through link list to find appropriate position of insertion
-  // (descending order by allocation size)
-  for (__MTENTRY_t *cur = *base_p, *prev = NULL; cur; cur = cur->nlink)
+  // (non-decreasing order by allocation size)
+  for (__MTENTRY_t *cur = *base_p; cur; cur = cur->nlink)
   {
-    if (cur->size <= row->size)
+    if (cur->size >= row->size)
     {
       // Current element has lesser size (insert new element before)
       if (cur->plink)
-      {
-	// Current element isn't first element
-	cur->plink = row;
-	prev->nlink = row;
-      }
+        // Current element isn't first element
+        cur->plink->nlink = row;
       else
-      {
-	// Current element is first element
-	cur->plink = row;
-	*base_p = row;
-      }
-      row->plink = prev;
+        // Current element is first element
+        *base_p = row;
+      row->plink = cur->plink;
+      cur->plink = row;
       row->nlink = cur;
       return;
     }
@@ -109,7 +102,6 @@ void __mtinsert(__MTENTRY_t** base_p, __MTENTRY_t* row)
       row->plink = cur;
       return;
     }
-    prev = cur;
   }
 }
 
@@ -193,16 +185,16 @@ __MTSTATC_t __mtadd(__MTABLE_t* mtable, size_t size, __STAT_t status, void* chun
 
   // Insert as linked list
   __mtinsert(base_p, row);
-
+ 
   return __MTSUCCESS;
 }
 
 /*
  * Marks existing entry under a different usage status
- * Input: Mem table, buffer address, usage status
+ * Input: Mem table, buffer address, usage status, size
  * Output: Status code
  */
-__MTSTATC_t __mtmark(__MTABLE_t* mtable, __MTENTRY_t* cur, __STAT_t status)
+__MTSTATC_t __mtmark(__MTABLE_t* mtable, __MTENTRY_t* cur, __STAT_t status, size_t size)
 {
   // Error check for invalid arguments
   if (!mtable || 
@@ -232,6 +224,10 @@ __MTSTATC_t __mtmark(__MTABLE_t* mtable, __MTENTRY_t* cur, __STAT_t status)
   if (cur->nlink)
     cur->nlink->plink = cur->plink;
   __mtinsert(newbase_p, cur);
+
+  // Set size to new size if provided
+  if (size)
+    cur->size = size;
   
   return __MTSUCCESS;
 }
@@ -262,10 +258,12 @@ __MTENTRY_t* __mtsearch(__MTABLE_t* mtable, __STAT_t status, size_t size, void* 
   }
 
   // Search by size or address
-  for (cur = *base_p; cur; cur->nlink)
-    if (size && cur->size == size ||
+  for (cur = *base_p; cur; cur = cur->nlink)
+  {
+    if (size && cur->size >= size ||
         address && cur->address == address)
       break;
+  }
 
   return cur;
 }

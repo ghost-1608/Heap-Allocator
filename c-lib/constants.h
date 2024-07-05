@@ -11,9 +11,9 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define B 1
-#define KiB 1024 * B
-#define MiB 1024 * KiB
+#define B (1)
+#define KiB (1024 * B)
+#define MiB (1024 * KiB)
 
 // Arena allocation size and minimum arena threshold space
 #define __ARALLOC_SIZE 2 * KiB
