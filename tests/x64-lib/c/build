@@ -12,7 +12,7 @@ var1=$1
 # Extract the substring before '.'
 var2=${var1%%.*}
 
-nasm -f elf64 "../../../x86-lib/brkalloc.asm" -o "../lib/brkalloc.o"
+nasm -f elf64 "../../../x64-lib/brkalloc.asm" -o "../lib/brkalloc.o"
 
 # Compile using gcc
 gcc "$var1" "../lib/brkalloc.o" -z noexecstack -o "$var2"
